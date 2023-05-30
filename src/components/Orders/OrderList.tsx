@@ -1,26 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WooCommerce } from '../../utils/api';
-import { formatCurrency } from '../../utils/formatCurrency';
+import OrderItem, { Order } from './OrderItem';
 import SkeletonRow from './SkeletonRow';
-
-interface Order {
-  id: number;
-  number: string;
-  status: string;
-  date_created: string;
-  shipping_total: string;
-  total: number;
-  billing: {
-    first_name: string;
-    last_name: string;
-  };
-  shipping_lines: {
-    meta_data: {
-      display_value: string;
-    }[];
-    method_title: string;
-  }[];
-}
 
 const OrderList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -59,60 +40,8 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const getShippingLineDisplayValue = (shippingLines: Order['shipping_lines']): string => {
-    if (shippingLines.length > 0 && shippingLines[0].meta_data.length > 1) {
-      const displayValue = shippingLines[0].meta_data[1].display_value;
-      return displayValue ? ' - ' + displayValue : '';
-    }
-    return '';
-  };
-
-  const getFormattedStatus = (status: string): string => {
-    switch (status) {
-    case 'separao':
-      return 'Em separação';
-    case 'pending':
-      return 'Pagamento Pendente';
-    case 'processing':
-      return 'Processando';
-    case 'failed':
-      return 'Malsucedido';
-    case 'cancelled':
-      return 'Cancelado';
-    case 'entregue':
-      return 'Entregue';
-    default:
-      return status;
-    }
-  };
-
-  const getStatusBackground = (status: string): React.CSSProperties => {
-    const backgroundStyle: React.CSSProperties = {
-      backgroundColor: '',
-    };
-
-    if (status === 'separao') {
-      backgroundStyle.backgroundColor = 'yellow';
-    } else if (status === 'pending') {
-      backgroundStyle.backgroundColor = 'gray';
-    } else if (status === 'enviado') {
-      backgroundStyle.backgroundColor = '#006BA1';
-    } else if (status === 'processing') {
-      backgroundStyle.backgroundColor = '#C6E1C6';
-    } else if (status === 'failed') {
-      backgroundStyle.backgroundColor = '#EBA3A3';
-    } else if (status === 'cancelled') {
-      backgroundStyle.backgroundColor = '#E5E5E5';
-    } else if (status === 'entregue') {
-      backgroundStyle.backgroundColor = '#E9426E';
-    }
-
-    return backgroundStyle;
-  };
-
   return (
     <div className='container mx-auto text-xs text-left'>
-
       <div className='mt-16 flex justify-center'>
         Informações Aqui
       </div>
@@ -149,34 +78,7 @@ const OrderList: React.FC = () => {
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order.id} className='border'>
-                <td className='px-4 py-2'>
-                  {order.number} - <strong>{order.billing.first_name} {order.billing.last_name}</strong>
-                </td>
-                <td className='px-4 py-2'>{formatCurrency(order.total)}</td>
-                <td className='px-4 py-2 uppercase' style={getStatusBackground(order.status)}>
-                  {getFormattedStatus(order.status)}
-                </td>
-                <td className='px-4 py-2'>
-                  {`${order.shipping_lines[0].method_title} `}
-                  <strong>{getShippingLineDisplayValue(order.shipping_lines)}</strong>
-                </td>
-                <td className='px-4 py-2'>
-                  {order.shipping_total !== '0.00' ? formatCurrency(parseFloat(order.shipping_total)) : ''}
-                </td>
-                <td className='flex'>
-                  <button
-                    className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'
-                  >
-    Editar
-                  </button>
-                  <button
-                    className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'
-                  >
-    Imprimir
-                  </button>
-                </td>
-              </tr>
+              <OrderItem key={order.id} order={order} />
             ))}
           </tbody>
         </table>
@@ -197,7 +99,6 @@ const OrderList: React.FC = () => {
           Avançar
         </button>
       </div>
-
     </div>
   );
 };
