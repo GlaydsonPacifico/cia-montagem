@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { WooCommerce } from '../../utils/api';
 import { formatCurrency } from '../../utils/formatCurrency';
+import SkeletonRow from './SkeletonRow';
 
 interface Order {
   id: number;
@@ -24,6 +25,7 @@ interface Order {
 const OrderList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const fetchOrders = async (page: number) => {
     try {
@@ -32,6 +34,7 @@ const OrderList: React.FC = () => {
         page: page,
       });
       setOrders(data);
+      setLoading(false);
       console.log('Orders: ', data);
     } catch (error) {
       console.error(error);
@@ -55,7 +58,6 @@ const OrderList: React.FC = () => {
       fetchOrders(previousPageNumber);
     }
   };
-
 
   const getShippingLineDisplayValue = (shippingLines: Order['shipping_lines']): string => {
     if (shippingLines.length > 0 && shippingLines[0].meta_data.length > 1) {
@@ -110,54 +112,76 @@ const OrderList: React.FC = () => {
 
   return (
     <div className='container mx-auto text-xs text-left'>
+
       <div className='mt-16 flex justify-center'>
         Informações Aqui
       </div>
 
-      <table className='min-w-full mt-16'>
-        <thead>
-          <tr>
-            <th className='px-4 py-2'>Pedido</th>
-            <th className='px-4 py-2'>Total</th>
-            <th className='px-4 py-2'>Status</th>
-            <th className='px-4 py-2'>Método Envio</th>
-            <th className='px-4 py-2'>Total da Entrega</th>
-            <th className='px-4 py-2'>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <tr key={order.id} className='border'>
-              <td className='px-4 py-2'>
-                {order.number} - <strong>{order.billing.first_name} {order.billing.last_name}</strong>
-              </td>
-              <td className='px-4 py-2'>{formatCurrency(order.total)}</td>
-              <td className='px-4 py-2 uppercase' style={getStatusBackground(order.status)}>
-                {getFormattedStatus(order.status)}
-              </td>
-              <td className='px-4 py-2'>
-                {`${order.shipping_lines[0].method_title} `}
-                <strong>{getShippingLineDisplayValue(order.shipping_lines)}</strong>
-              </td>
-              <td className='px-4 py-2'>
-                {order.shipping_total !== '0.00' ? formatCurrency(parseFloat(order.shipping_total)) : ''}
-              </td>
-              <td className='flex'>
-                <button
-                  className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'
-                >
-          Editar
-                </button>
-                <button
-                  className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'
-                >
-          Imprimir
-                </button>
-              </td>
+      {loading ? (
+        <table className='min-w-full mt-16'>
+          <thead>
+            <tr>
+              <th className='px-4 py-2'>Pedido</th>
+              <th className='px-4 py-2'>Total</th>
+              <th className='px-4 py-2'>Status</th>
+              <th className='px-4 py-2'>Método Envio</th>
+              <th className='px-4 py-2'>Total da Entrega</th>
+              <th className='px-4 py-2'>Ações</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {[...Array(6)].map((_, index) => (
+              <SkeletonRow key={index} />
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <table className='min-w-full mt-16'>
+          <thead>
+            <tr>
+              <th className='px-4 py-2'>Pedido</th>
+              <th className='px-4 py-2'>Total</th>
+              <th className='px-4 py-2'>Status</th>
+              <th className='px-4 py-2'>Método Envio</th>
+              <th className='px-4 py-2'>Total da Entrega</th>
+              <th className='px-4 py-2'>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <tr key={order.id} className='border'>
+                <td className='px-4 py-2'>
+                  {order.number} - <strong>{order.billing.first_name} {order.billing.last_name}</strong>
+                </td>
+                <td className='px-4 py-2'>{formatCurrency(order.total)}</td>
+                <td className='px-4 py-2 uppercase' style={getStatusBackground(order.status)}>
+                  {getFormattedStatus(order.status)}
+                </td>
+                <td className='px-4 py-2'>
+                  {`${order.shipping_lines[0].method_title} `}
+                  <strong>{getShippingLineDisplayValue(order.shipping_lines)}</strong>
+                </td>
+                <td className='px-4 py-2'>
+                  {order.shipping_total !== '0.00' ? formatCurrency(parseFloat(order.shipping_total)) : ''}
+                </td>
+                <td className='flex'>
+                  <button
+                    className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'
+                  >
+    Editar
+                  </button>
+                  <button
+                    className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'
+                  >
+    Imprimir
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
       <div className='flex justify-center mt-4 mb-4'>
         <button
           className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2'
@@ -172,8 +196,8 @@ const OrderList: React.FC = () => {
         >
           Avançar
         </button>
-
       </div>
+
     </div>
   );
 };
