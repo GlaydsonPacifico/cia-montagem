@@ -5,7 +5,7 @@ interface SideBarProps {
 }
 
 export const SideBar: React.FC<SideBarProps> = ({ handleOrdersClick  }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<boolean>(false);
 
   const handleShowOrders = () => {
     setOpen(false);
