@@ -9,10 +9,17 @@ export interface Order {
   shipping_total: string;
   total: number;
   billing: {
-    first_name: string;
-    last_name: string;
+    first_name?: string;
+    last_name?: string;
+    address_1: string;
+    city: string;
+    neighborhood: string;
+    number: string;
+    postcode: string;
+    state: string;
   };
   shipping_lines: {
+    method_id: string;
     meta_data: {
       display_value: string;
     }[];
@@ -22,9 +29,10 @@ export interface Order {
 
 interface OrderItemProps {
   order: Order;
+  onEditOrder: (orderId: number) => void;
 }
 
-const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
+const OrderItem: React.FC<OrderItemProps> = ({ order, onEditOrder }) => {
   const getShippingLineDisplayValue = (): string => {
     if (order.shipping_lines.length > 0 && order.shipping_lines[0].meta_data.length > 1) {
       const displayValue = order.shipping_lines[0].meta_data[1].display_value;
@@ -47,6 +55,8 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
       return 'Cancelado';
     case 'entregue':
       return 'Entregue';
+    case 'shipping-progress':
+      return 'Pronto Envio';
     default:
       return order.status;
     }
@@ -86,6 +96,10 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
     return backgroundStyle;
   };
 
+  const handleEditClick = (): void => {
+    onEditOrder(order.id);
+  };
+
   return (
     <tr className='border'>
       <td className='px-4 py-2'>
@@ -103,7 +117,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
         {order.shipping_total !== '0.00' ? formatCurrency(parseFloat(order.shipping_total)) : ''}
       </td>
       <td className='flex'>
-        <button className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'>
+        <button className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2' onClick={handleEditClick}>
           Editar
         </button>
         <button className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded mr-2'>

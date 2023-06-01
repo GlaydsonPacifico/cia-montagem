@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { WooCommerce } from '../../utils/api';
 import OrderItem, { Order } from './OrderItem';
+import OrderEdit from './OrderEdit';
 import SkeletonRow from './SkeletonRow';
+import ModalOrderEdit from './ModalOrderEdit';
 
 const OrderList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const fetchOrders = async (page: number) => {
     try {
@@ -16,8 +20,9 @@ const OrderList: React.FC = () => {
       });
       setOrders(data);
       setLoading(false);
-      console.log('Orders: ', data);
     } catch (error) {
+
+      // Tratar Erros
       console.error(error);
     }
   };
@@ -38,6 +43,58 @@ const OrderList: React.FC = () => {
       setCurrentPage(previousPageNumber);
       fetchOrders(previousPageNumber);
     }
+  };
+
+  const handleEditOrder = (orderId: number): void => {
+    setEditingOrderId(orderId);
+    setIsModalOpen(true);
+  };
+
+  const handleUpdateOrder = async (editedOrder: Order) => {
+    const { id } = editedOrder;
+
+    const updatedData = {
+      status: editedOrder.status,
+      billing: {
+        address_1: editedOrder.billing.address_1,
+        city: editedOrder.billing.city,
+        neighborhood: editedOrder.billing.neighborhood,
+        number: editedOrder.billing.number,
+        postcode: editedOrder.billing.postcode,
+        state: editedOrder.billing.state,
+      },
+    };
+
+    try {
+      const response = await WooCommerce.put(`orders/${id}`, updatedData);
+
+      // Tratar Resposta
+      console.log('Order updated:', response.data);
+
+      updateOrderList(editedOrder);
+    } catch (error) {
+
+      // Tratar Erros
+      console.error('Error updating order:', error);
+    }
+    setEditingOrderId(null);
+  };
+
+  const handleCancelEdit = (): void => {
+    setEditingOrderId(null);
+    setIsModalOpen(false);
+  };
+
+  const updateOrderList = (editedOrder: Order) => {
+    setOrders((prevOrders) => {
+      const updatedOrders = prevOrders.map((order) => {
+        if (order.id === editedOrder.id) {
+          return editedOrder;
+        }
+        return order;
+      });
+      return updatedOrders;
+    });
   };
 
   return (
@@ -78,7 +135,11 @@ const OrderList: React.FC = () => {
           </thead>
           <tbody>
             {orders.map((order) => (
-              <OrderItem key={order.id} order={order} />
+              <OrderItem
+                key={order.id}
+                order={order}
+                onEditOrder={handleEditOrder}
+              />
             ))}
           </tbody>
         </table>
@@ -99,6 +160,15 @@ const OrderList: React.FC = () => {
           Avançar
         </button>
       </div>
+      {editingOrderId !== null && (
+        <ModalOrderEdit isOpen={isModalOpen} onClose={handleCancelEdit}>
+          <OrderEdit
+            order={orders.find(order => order.id === editingOrderId)}
+            onUpdateOrder={handleUpdateOrder}
+            onCancelEdit={handleCancelEdit}
+          />
+        </ModalOrderEdit>
+      )}
     </div>
   );
 };
